@@ -38,6 +38,10 @@ isBinaryChar :: Char -> Bool
 isBinaryChar c =
     c == '0' || c == '1'
 
+isOperation :: Char -> Bool
+isOperation c =
+    c == '&' || c == '|' || c == '⊕'
+
 satisfy :: (Char -> Bool) -> Parser Char
 satisfy pr = Parser f where
     -- берем первый символ
@@ -58,3 +62,6 @@ binary = Parser $ \text ->
         Just (remaining, c) -> case runParser binary remaining of
             Nothing -> Just (remaining, T.singleton c) -- первый элемент не подошел, то берем (старый остаток, единственный подошедший элемент)
             Just (remaining', rest) -> Just (remaining', T.cons c rest) -- сработал штатно, то (новый остаток, добавляем подошедший элемент к остальным)
+
+operation :: Parser Char
+operation = satisfy isOperation
