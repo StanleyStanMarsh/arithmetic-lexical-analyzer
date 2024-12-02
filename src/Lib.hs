@@ -1,5 +1,5 @@
 module Lib
-    ( isBinary
+    ( satisfy
     ) where
 
 import Data.Text (Text)
@@ -34,13 +34,16 @@ instance Applicative Parser where
                 -- remainingV - итоговый остаток, resU применяем над resV
                 Just (remainingV, resV) -> Just (remainingV, resU resV)
 
-isBinary :: Text -> Bool
-isBinary = T.all (`elem` ("01" :: String))
+isBinaryChar :: Char -> Bool
+isBinaryChar c =
+    c == '0' || c == '1'
 
-satisfy :: (Text -> Bool) -> Parser Text
+satisfy :: (Char -> Bool) -> Parser Char
 satisfy pr = Parser f where
-    f cs | pr cs = Just (T.pack "", cs)
+    f cs = case T.uncons cs of
+        Nothing -> Nothing
+        Just (fstChar, remainingText) | pr fstChar -> Just (remainingText, fstChar)
     f _ = Nothing
 
-binary :: Parser Text
-binary = satisfy isBinary
+-- binary :: Parser Text
+-- binary 
