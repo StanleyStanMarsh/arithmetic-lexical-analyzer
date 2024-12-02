@@ -40,10 +40,21 @@ isBinaryChar c =
 
 satisfy :: (Char -> Bool) -> Parser Char
 satisfy pr = Parser f where
+    -- берем первый символ
     f cs = case T.uncons cs of
         Nothing -> Nothing
-        Just (fstChar, remainingText) | pr fstChar -> Just (remainingText, fstChar)
+        -- если первый элемент соответствует предикату pr
+        Just (fstChar, remainingText)
+            | pr fstChar -> Just (remainingText, fstChar) -- то возвращаем (остаток, подоходящий первый элемент)
+            | otherwise -> Nothing
     f _ = Nothing
 
--- binary :: Parser Text
--- binary 
+binary :: Parser Text
+binary = Parser $ \text ->
+    -- если первый элемент
+    case runParser (satisfy isBinaryChar) text of
+        Nothing -> Nothing -- не подошел, то строка очевидно сразу не подходит
+        -- (рекурсивно) если парсер на остатке
+        Just (remaining, c) -> case runParser binary remaining of
+            Nothing -> Just (remaining, T.singleton c) -- первый элемент не подошел, то берем (старый остаток, единственный подошедший элемент)
+            Just (remaining', rest) -> Just (remaining', T.cons c rest) -- сработал штатно, то (новый остаток, добавляем подошедший элемент к остальным)
