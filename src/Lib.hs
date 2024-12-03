@@ -4,7 +4,7 @@ module Lib
 
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Char
+import Control.Applicative
 
 newtype Parser a = Parser { runParser :: Text -> Maybe (Text, a) }
 
@@ -34,6 +34,20 @@ instance Applicative Parser where
                 -- remainingV - итоговый остаток, resU применяем над resV
                 Just (remainingV, resV) -> Just (remainingV, resU resV)
 
+instance Alternative Parser where
+    empty :: Parser a
+    -- парсер всегда возвращающий Nothing
+    empty = Parser $ \_ -> Nothing
+
+    (<|>) :: Parser a -> Parser a -> Parser a
+    Parser u <|> Parser v = Parser f where
+        -- пытаемся применить парсер u
+        f origText = case u origText of
+            -- если он вернул Nothing, то применям парсер v
+            Nothing -> v origText
+            -- если вернул какой то результат, то оставляем результат
+            res -> res
+
 isBinaryChar :: Char -> Bool
 isBinaryChar c =
     c == '0' || c == '1'
@@ -41,6 +55,9 @@ isBinaryChar c =
 isOperation :: Char -> Bool
 isOperation c =
     c == '&' || c == '|' || c == '⊕'
+
+isSpace :: Char -> Bool
+isSpace c = c == ' '
 
 satisfy :: (Char -> Bool) -> Parser Char
 satisfy pr = Parser f where
@@ -65,3 +82,9 @@ binary = Parser $ \text ->
 
 operation :: Parser Char
 operation = satisfy isOperation
+
+oneSpace :: Parser Char
+oneSpace = satisfy isSpace
+
+spaces :: Parser Text
+spaces = (T.cons) <$> oneSpace <*> spaces <|> pure T.empty
