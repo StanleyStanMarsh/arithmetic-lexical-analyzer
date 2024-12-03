@@ -5,6 +5,7 @@ module Lib
 import Data.Text (Text)
 import qualified Data.Text as T
 import Control.Applicative
+import Data.Char (digitToInt)
 
 newtype Parser a = Parser { runParser :: Text -> Maybe (Text, a) }
 
@@ -80,6 +81,12 @@ binary = Parser $ \text ->
             Nothing -> Just (remaining, T.singleton c) -- первый элемент не подошел, то берем (старый остаток, единственный подошедший элемент)
             Just (remaining', rest) -> Just (remaining', T.cons c rest) -- сработал штатно, то (новый остаток, добавляем подошедший элемент к остальным)
 
+binToInt :: Text -> Int
+binToInt text = T.foldl' (\acc c -> acc * 2 + digitToInt c) 0 text
+
+binaryInt :: Parser Int
+binaryInt = binToInt <$> binary
+
 operation :: Parser Char
 operation = satisfy isOperation
 
@@ -88,3 +95,6 @@ oneSpace = satisfy isSpace
 
 spaces :: Parser Text
 spaces = (T.cons) <$> oneSpace <*> spaces <|> pure T.empty
+
+-- binaryExpression :: Parser Text
+-- binaryExpression = 
