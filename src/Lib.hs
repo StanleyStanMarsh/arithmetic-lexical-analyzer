@@ -5,8 +5,9 @@ module Lib
 import Data.Text (Text)
 import qualified Data.Text as T
 import Control.Applicative
-import Data.Char (digitToInt)
+import Data.Char (digitToInt, intToDigit)
 import Data.Bits ((.&.), (.|.), xor)
+import Numeric (showIntAtBase)
 
 newtype Parser a = Parser { runParser :: Text -> Maybe (Text, a) }
 
@@ -85,6 +86,9 @@ binary = Parser $ \text ->
 binToInt :: Text -> Int
 binToInt text = T.foldl' (\acc c -> acc * 2 + digitToInt c) 0 text
 
+intToBin :: Int -> Text
+intToBin n = T.pack (showIntAtBase 2 intToDigit n "")
+
 binaryInt :: Parser Int
 binaryInt = binToInt <$> binary
 
@@ -112,3 +116,20 @@ binaryExpression =
     <*> operation
     <*> spaces
     <*> binaryInt
+
+binaryExpressionFormatted :: Parser Text
+binaryExpressionFormatted =
+    (\_ b1 _ op _ b2 -> formatExpression b1 op b2)
+    <$> spaces
+    <*> binary
+    <*> spaces
+    <*> operation
+    <*> spaces
+    <*> binary
+
+formatExpression :: Text -> Char -> Text -> Text
+formatExpression b1 op b2 =
+    let int1 = binToInt b1
+        int2 = binToInt b2
+        result = applyOperation op int1 int2
+    in b1 <> (T.pack " ") <> T.singleton op <> (T.pack " ") <> b2 <> (T.pack " = ") <> intToBin result
