@@ -6,6 +6,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Control.Applicative
 import Data.Char (digitToInt)
+import Data.Bits ((.&.), (.|.), xor)
 
 newtype Parser a = Parser { runParser :: Text -> Maybe (Text, a) }
 
@@ -96,5 +97,18 @@ oneSpace = satisfy isSpace
 spaces :: Parser Text
 spaces = (T.cons) <$> oneSpace <*> spaces <|> pure T.empty
 
--- binaryExpression :: Parser Text
--- binaryExpression = 
+applyOperation :: Char -> Int -> Int -> Int
+applyOperation op
+    | op == '&' = (.&.)
+    | op == '|' = (.|.)
+    | op == '⊕' = xor
+
+binaryExpression :: Parser Int
+binaryExpression =
+    (\_ b1 _ op _ b2 -> applyOperation op b1 b2)
+    <$> spaces
+    <*> binaryInt
+    <*> spaces
+    <*> operation
+    <*> spaces
+    <*> binaryInt
