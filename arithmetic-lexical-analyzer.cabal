@@ -4,14 +4,14 @@ cabal-version: 2.2
 --
 -- see: https://github.com/sol/hpack
 
-name:           binary-parser
+name:           arithmetic-lexical-analyzer
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/binary-parser#readme>
-homepage:       https://github.com/githubuser/binary-parser#readme
-bug-reports:    https://github.com/githubuser/binary-parser/issues
+description:    Please see the README on GitHub at <https://github.com/StanleyStanMarsh/arithmetic-lexical-analyzer#readme>
+homepage:       https://github.com/StanleyStanMarsh/arithmetic-lexical-analyzer#readme
+bug-reports:    https://github.com/StanleyStanMarsh/arithmetic-lexical-analyzer/issues
 author:         Astafiev Igor
 maintainer:     example@example.com
-copyright:      2024 Astafiev Igor
+copyright:      2025 Astafiev Igor
 license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
@@ -21,15 +21,15 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/binary-parser
+  location: https://github.com/StanleyStanMarsh/arithmetic-lexical-analyzer
 
 library
   exposed-modules:
-      Parser
+      Lexer
   other-modules:
-      Paths_binary_parser
+      Paths_arithmetic_lexical_analyzer
   autogen-modules:
-      Paths_binary_parser
+      Paths_arithmetic_lexical_analyzer
   hs-source-dirs:
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
@@ -39,35 +39,35 @@ library
     , text
   default-language: Haskell2010
 
-executable binary-parser-exe
+executable arithmetic-lexical-analyzer-exe
   main-is: Main.hs
   other-modules:
-      Paths_binary_parser
+      Paths_arithmetic_lexical_analyzer
   autogen-modules:
-      Paths_binary_parser
+      Paths_arithmetic_lexical_analyzer
   hs-source-dirs:
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
-    , binary-parser
+      arithmetic-lexical-analyzer
+    , base >=4.7 && <5
     , bytestring
     , text
   default-language: Haskell2010
 
-test-suite binary-parser-test
+test-suite arithmetic-lexical-analyzer-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_binary_parser
+      Paths_arithmetic_lexical_analyzer
   autogen-modules:
-      Paths_binary_parser
+      Paths_arithmetic_lexical_analyzer
   hs-source-dirs:
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
-    , binary-parser
+      arithmetic-lexical-analyzer
+    , base >=4.7 && <5
     , bytestring
     , text
   default-language: Haskell2010

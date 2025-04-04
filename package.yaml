@@ -39,7 +39,7 @@ library:
   source-dirs: src
 
 executables:
-  binary-parser-exe:
+  arithmetic-lexical-analyzer-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -47,10 +47,10 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - binary-parser
+    - arithmetic-lexical-analyzer
 
 tests:
-  binary-parser-test:
+  arithmetic-lexical-analyzer-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -58,4 +58,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - binary-parser
+    - arithmetic-lexical-analyzer
