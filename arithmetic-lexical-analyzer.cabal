@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Lexer
+      Printer
   other-modules:
       Paths_arithmetic_lexical_analyzer
   autogen-modules:
@@ -36,6 +37,7 @@ library
   build-depends:
       base >=4.7 && <5
     , bytestring
+    , directory
     , text
   default-language: Haskell2010
 
@@ -52,6 +54,7 @@ executable arithmetic-lexical-analyzer-exe
       arithmetic-lexical-analyzer
     , base >=4.7 && <5
     , bytestring
+    , directory
     , text
   default-language: Haskell2010
 
@@ -69,5 +72,6 @@ test-suite arithmetic-lexical-analyzer-test
       arithmetic-lexical-analyzer
     , base >=4.7 && <5
     , bytestring
+    , directory
     , text
   default-language: Haskell2010

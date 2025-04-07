@@ -1,20 +1,21 @@
 module Lexer 
     ( lexer,
-      printLexTable
+      Token(..),
+      assignIdentifierNumbers
     ) where
 
 import Data.Char (isAlpha, isAlphaNum, isDigit, isSpace)
 
 -- токены
 data Token = Identifier String Int
-           | IntNumber Int
-           | FloatNumber Float
+           | IntNumber String
+           | FloatNumber String
            | Assign
            | Plus | Minus | Mul | Div
            | LParen | RParen
            | Semicolon
            | Begin | End
-           | Error String
+           | Error String String
            deriving (Show, Eq)
 
 -- маппинг ключевых слов на уникальные значения (X1, X2, ...)
@@ -25,24 +26,25 @@ lexer :: String -> [Token]
 lexer [] = []
 lexer (c:cs)
   | isSpace c = lexer cs
-  | c == ';'  = lexer cs
-  | c == '#'  = lexer (dropWhile (/='\n') cs)
+  | c == '#'  = lexer (dropWhile (/= '\n') cs)
+  | c == ';'  = Semicolon : lexer cs
+  | c == ':'  = lexerAssign cs
+  | isAlpha c = lexKeywordOrIdentifier (c:cs)
+  | isDigit c = lexSignedNumber '+' (c:cs)
+  | (c == '+' || c == '-') && not (null cs) && isDigit (head cs) = lexSignedNumber c cs
   | c == '+'  = Plus : lexer cs
   | c == '-'  = Minus : lexer cs
   | c == '*'  = Mul : lexer cs
   | c == '/'  = Div : lexer cs
   | c == '('  = LParen : lexer cs
   | c == ')'  = RParen : lexer cs
-  | c == ':'  = lexerAssign cs
-  | isAlpha c = lexKeywordOrIdentifier (c:cs)
-  | isDigit c = lexNumber (c:cs)
-  | otherwise = Error [c] : lexer cs  -- Ошибка, если символ не распознан
+  | otherwise = Error "Неизвестный символ " [c] : lexer cs
 
 identifierCheck :: String -> Token
 identifierCheck x
-    | length x > 16 = Error "Identifier too long"
+    | length x > 16 = Error "Длинный идентификатор" x
     | all (`elem` (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'])) x = Identifier x 0
-    | otherwise = Error "Identifier contains invalid characters"
+    | otherwise = Error "Неверный идентификатор" x
 
 lexKeywordOrIdentifier :: String -> [Token]
 lexKeywordOrIdentifier xs
@@ -59,46 +61,31 @@ isKeyWord x = x `elem` map fst keywordMapping
 keywordToken :: String -> Token
 keywordToken "begin" = Begin
 keywordToken "end" = End
-keywordToken _ = Error "Unknown keyword"
+keywordToken c = Error "Не ключевое слово" c
 
 -- присваивание
 lexerAssign :: String -> [Token]
 lexerAssign ('=':xs) = Assign : lexer xs
-lexerAssign _ = Error "Invalid assignment operator" : []
+lexerAssign (x:xs) = Error "Неизвестный символ" [x] : lexer (x:xs)
+lexerAssign [] = []
 
--- числа
-lexNumber :: String -> [Token]
-lexNumber xs =
-    let (num, rest) = span isDigit xs
-    in case rest of
-        ('.':ys) -> lexFloat (num ++ ".") ys  -- если точка, переходим к вещественному
-        ('e':ys) -> lexExponent (num ++ "e") ys  -- если есть экспонента, переходим к обработке экспоненты
-        ('E':ys) -> lexExponent (num ++ "E") ys  -- для заглавной 'E'
-        _        -> IntNumber (read num) : lexer rest  -- целое
-
--- числа с плавающей точкой
-lexFloat :: String -> String -> [Token]
-lexFloat xs ys =
-    let (fracPart, rest) = span isDigit ys
-    in case rest of
-        ('e':zs) -> lexExponent (xs ++ fracPart ++ "e") zs
-        ('E':zs) -> lexExponent (xs ++ fracPart ++ "E") zs
-        _        -> FloatNumber (read (xs ++ fracPart)) : lexer rest
-
--- обработка экспоненциальной части
-lexExponent :: String -> String -> [Token]
-lexExponent xs (c:cs)
-    | c == '+' || c == '-' =  -- знак экспоненты (e+2, e-3)
-        let (expDigits, rest) = span isDigit cs
-        in if null expDigits
-           then Error "Invalid exponent format" : lexer rest  -- если после e+ или e- нет цифр
-           else FloatNumber (read (xs ++ c : expDigits)) : lexer rest
-    | isDigit c =
-        let (expDigits, rest) = span isDigit (c:cs)
-        in FloatNumber (read (xs ++ expDigits)) : lexer rest
-    | otherwise = Error "Invalid exponent format" : lexer (c:cs)  -- если e не сопровождается цифрами
-
-lexExponent xs [] = Error "Invalid exponent format" : []  -- если строка обрывается на e
+-- числа со знаком
+lexSignedNumber :: Char -> String -> [Token]
+lexSignedNumber sign xs =
+    let (numPart, rest) = span (\ch -> isDigit ch || ch == '.' || ch == 'e' || ch == 'E' || ch == '+' || ch == '-') xs
+        -- Если знак положительный, используем numPart, иначе добавляем знак '-' в начало.
+        numberStr = if sign == '+' then numPart else sign : numPart
+    in if not (null rest) && isAlpha (head rest)
+          then let extra = takeWhile isAlphaNum rest
+                   errToken = numberStr ++ extra
+               in Error "Неверный идентификатор" errToken : lexer (dropWhile isAlphaNum rest)
+          else if any (`elem` ".eE") numberStr
+                 then case reads numberStr :: [(Float, String)] of
+                         [(_, "")] -> FloatNumber numberStr : lexer rest
+                         _           -> Error "Неверное вещественное" numberStr : lexer rest
+                 else case reads numberStr :: [(Int, String)] of
+                         [(_, "")] -> IntNumber numberStr : lexer rest
+                         _           -> Error "Неверное целое" numberStr : lexer rest
 
 -- присваивание уникальных номеров идентификаторам
 assignIdentifierNumbers :: [Token] -> [Token]
@@ -117,33 +104,3 @@ assignIdentifierNumbers tokens = assignNumbers [] 1 tokens
     
     -- пропуск остальных токенов
     assignNumbers used count (t:ts) = t : assignNumbers used count ts
-
--- печать таблицы лексем
-printLexTable :: String -> IO ()
-printLexTable input = do
-    putStrLn $ input ++ "\n"
-    let tokens = lexer input
-    let tokensWithNumbers = assignIdentifierNumbers tokens
-    putStrLn "Таблица лексем:\n"
-    putStrLn $ "Лексема" ++ tabs ++ "Тип лексемы" ++ tabs ++ "Значение"
-    mapM_ printToken tokensWithNumbers
-
-tabs :: String
-tabs = "\t\t\t\t"
-
--- печать отдельного токена
-printToken :: Token -> IO ()
-printToken (Identifier name num) = putStrLn $ name ++ tabs ++ "Идентификатор" ++ tabs ++ name ++ " : " ++ show num
-printToken (IntNumber num) = putStrLn $ show num ++ tabs ++ "Целочисленная константа\t\t\t" ++ show num
-printToken (FloatNumber num) = putStrLn $ show num ++ tabs ++ "Вещественная константа\t\t\t" ++ show num
-printToken Assign = putStrLn $ ":=" ++ tabs ++ "Знак присваивания"
-printToken Plus = putStrLn $ "+" ++ tabs ++ "Знак арифметической операции"
-printToken Minus = putStrLn $ "-" ++ tabs ++ "Знак арифметической операции"
-printToken Mul = putStrLn $ "*" ++ tabs ++ "Знак арифметической операции"
-printToken Div = putStrLn $ "/" ++ tabs ++ "Знак арифметической операции"
-printToken LParen = putStrLn $ "(" ++ tabs ++ "Знак операции"
-printToken RParen = putStrLn $ ")" ++ tabs ++ "Знак операции"
-printToken Begin = putStrLn $ "begin" ++ tabs ++ "Ключевое слово" ++ tabs ++ "X1"
-printToken End = putStrLn $ "end" ++ tabs ++ "Ключевое слово" ++ tabs ++ "X2"
-printToken (Error msg) = putStrLn $ "Ошибка" ++ tabs ++ msg
-
