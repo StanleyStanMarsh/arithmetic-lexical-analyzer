@@ -69,11 +69,11 @@ printToken Div =
              ++ padRight colWidth3 "|" ++ "|"
 printToken LParen = 
     putStrLn $ padRight colWidth1 "| (" 
-             ++ padRight colWidth2 "| Знак операции" 
+             ++ padRight colWidth2 "| Открывающая скобка" 
              ++ padRight colWidth3 "|" ++ "|"
 printToken RParen = 
     putStrLn $ padRight colWidth1 "| )" 
-             ++ padRight colWidth2 "| Знак операции" 
+             ++ padRight colWidth2 "| Закрывающая скобка" 
              ++ padRight colWidth3 "|" ++ "|"
 printToken Begin = 
     putStrLn $ padRight colWidth1 "| begin" 
